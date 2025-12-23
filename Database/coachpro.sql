@@ -6,7 +6,8 @@ create table users (
     nom_user varchar(100),
     prenom_user varchar(100),
     email_user varchar(150) unique,
-    role_user enum('coach', 'sportif') not null
+    role_user enum('coach', 'sportif') not null,
+    password_user varchar(255)
 );
 
 create table coachs (
