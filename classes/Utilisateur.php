@@ -1,12 +1,12 @@
 <?php
-    require_once "./config/database.php";
+    require_once __DIR__ . "/../config/database.php";
 class Utilisateur
 {
     protected ?int $id_user = null;
     protected string $nom_user = "";
     protected string $prenom_user = "";
     protected string $email_user = "";
-    protected string $role_user = ""; 
+    protected string $role_user = "";
 
     protected PDO $pdo;
 
