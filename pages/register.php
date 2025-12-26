@@ -27,9 +27,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $password = $_POST["password"];
     $confirmPassword = $_POST["confirmPassword"];
     $role     = trim($_POST["role"]);
-    $disciplines = trim($_POST["disciplines"] ?? "");
-    $experience  = $_POST["experience"] ?? null;
+    $experience  = $_POST["experience"];
     $bio         = trim($_POST["biographie"] ?? "");
+    $disciplines_string = trim($_POST["disciplines"]);
+
+    $disciplines_array = [];
+    if ($disciplines_string !== "") {
+        $disciplines_array = array_map("trim", explode(",", $disciplines_string));
+        $disciplines_array = array_filter($disciplines_array);
+    }
+    $disciplines = $disciplines_string;
+
 
     $old["nom"] = $nom;
     $old["prenom"] = $prenom;
@@ -125,7 +133,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <i class="fas fa-exclamation-triangle"></i>
                 <ul>
                 <?php foreach ($errors as $e): ?>
-                    <li><?= htmlspecialchars($e) ?></li>
+                    <li><?= $e ?></li>
                 <?php endforeach; ?>
                 </ul>
             </div>
@@ -216,7 +224,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     <div class="tag-input" id="tags">
                         <!-- Selected tags will appear here -->
                     </div>
-                    <input type="hidden" name="disciplines" id="hiddenInput">
+                    <input type="hidden" name="disciplines" id="hiddenInput" required>
                     
                     <p class="discipline-hint">
                         <i class="fas fa-info-circle"></i>
@@ -240,7 +248,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     <label for="experience"><i class="fas fa-calendar-alt"></i> Années d'expérience</label>
                     <div class="input-group">
                         <i class="fas fa-medal"></i>
-                        <input type="number" name="experience" id="experience" class="form-control" placeholder="Ex: 5" min="0">
+                        <input type="number" name="experience" id="experience" class="form-control" placeholder="Ex: 5" min="0" required>
                     </div>
                 </div>
 

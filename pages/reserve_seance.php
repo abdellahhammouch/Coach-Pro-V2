@@ -1,4 +1,7 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 session_start();
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'sportif') {
@@ -6,9 +9,9 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'sportif') {
     exit;
 }
 
-require_once __DIR__ . "/../../config/database.php";
-require_once __DIR__ . "/../../classes/Seance.php";
-require_once __DIR__ . "/../../classes/Reservation.php";
+require_once __DIR__ . "../../config/database.php";
+require_once __DIR__ . "../../classes/Seance.php";
+require_once __DIR__ . "../../classes/Reservation.php";
 
 $seanceId  = (int)($_POST['seance_id'] ?? 0);
 $sportifId = (int)$_SESSION['user_id'];
@@ -50,6 +53,6 @@ try {
     $_SESSION['error'] = $e->getMessage();
 }
 
-header("Location: dashboard_sportif.php");
+header("Location: Dashboards/dashboard_sportif.php");
 exit;
 ?>

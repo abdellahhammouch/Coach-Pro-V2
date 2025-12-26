@@ -15,7 +15,6 @@ class Coach extends Utilisateur
     public function getExperience(): int { return $this->experiences_coach; }
     public function getDescription(): string { return $this->description_coach; }
 
-    // Charger le profil coach depuis la table coachs
     public function loadCoachProfile(int $id_user): bool
     {
         $stmt = $this->pdo->prepare("SELECT * FROM coachs WHERE id_user = ?");
@@ -24,23 +23,20 @@ class Coach extends Utilisateur
 
         if (!$row) return false;
 
-        $this->discipline_coach = $row["discipline_coach"] ?? "";
-        $this->experiences_coach = (int)($row["experiences_coach"] ?? 0);
+        $this->discipline_coach = $row["discipline_coach"];
+        $this->experiences_coach = $row["experiences_coach"];
         $this->description_coach = $row["description_coach"] ?? "";
 
         return true;
     }
 
-    // Modifier profil coach (utile après connexion)
     public function updateCoachProfile(string $discipline, int $experience, string $description): bool
     {
         if ($this->id_user === null) return false;
 
-        $stmt = $this->pdo->prepare("
-            UPDATE coachs
-            SET discipline_coach = ?, experiences_coach = ?, description_coach = ?
-            WHERE id_user = ?
-        ");
+        $stmt = $this->pdo->prepare("UPDATE coachs
+                                    SET discipline_coach = ?, experiences_coach = ?, description_coach = ?
+                                    WHERE id_user = ?");
 
         return $stmt->execute([trim($discipline), $experience, trim($description), $this->id_user]);
     }

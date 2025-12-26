@@ -16,7 +16,7 @@ require_once __DIR__ . "/../../classes/Seance.php";
 $db = new Database();
 $pdo = $db->connect();
 
-$coach_id = (int)$_SESSION["user_id"];
+$coach_id = $_SESSION["user_id"];
 
 $stmtCoach = $pdo->prepare("SELECT  u.id_user, u.nom_user, u.prenom_user, u.email_user,
                                     c.discipline_coach, c.experiences_coach, c.description_coach
@@ -77,37 +77,38 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["delete_seance"])) {
     }
 }
 
+/* stats seances */
 $stmtTotal = $pdo->prepare("SELECT COUNT(*) FROM seances 
                             WHERE coach_id = ?");
 $stmtTotal->execute([$coach_id]);
-$total_seances = (int)$stmtTotal->fetchColumn();
+$total_seances = $stmtTotal->fetchColumn();
 
 $stmtDispo = $pdo->prepare("SELECT COUNT(*) FROM seances 
                             WHERE coach_id = ? AND statut_seance = 'disponible'");
 $stmtDispo->execute([$coach_id]);
-$dispo_seances = (int)$stmtDispo->fetchColumn();
+$dispo_seances = $stmtDispo->fetchColumn();
 
-$stmtRes = $pdo->prepare("SELECT COUNT(*) FROM seances 
-                            WHERE coach_id = ? AND statut_seance = 'reservee'");
+$stmtRes = $pdo->prepare("SELECT COUNT(*) FROM seances WHERE coach_id = ? AND statut_seance = 'reservee'");
 $stmtRes->execute([$coach_id]);
 $reservee_seances = $stmtRes->fetchColumn();
 
-$stmtAth = $pdo->prepare("SELECT COUNT(DISTINCT r.sportif_id)FROM reservations r
-                            WHERE r.coach_id = ?");
+/* sportifs count (via reservations + seances) */
+$stmtAth = $pdo->prepare("SELECT COUNT(DISTINCT r.sportif_id)
+                        FROM reservations r
+                        JOIN seances s ON s.id_seance = r.seance_id
+                        WHERE s.coach_id = ? AND r.statut_reservation = 'active'");
 $stmtAth->execute([$coach_id]);
-$athletes_count = (int)$stmtAth->fetchColumn();
-
+$athletes_count = $stmtAth->fetchColumn();
 
 $mySeances = $seanceModel->getByCoach($coach_id);
 
-
-$stmtReservations = $pdo->prepare("SELECT   r.id_reservation, r.created_at,
+$stmtReservations = $pdo->prepare("SELECT   r.id_reservation, r.statut_reservation,
                                             s.id_seance, s.date_seance, s.heure_seance, s.duree_senace, s.statut_seance,
                                             u.nom_user AS sportif_nom, u.prenom_user AS sportif_prenom
                                     FROM reservations r
                                     JOIN seances s ON s.id_seance = r.seance_id
                                     JOIN users u ON u.id_user = r.sportif_id
-                                    WHERE r.coach_id = ?
+                                    WHERE s.coach_id = ?
                                     ORDER BY s.date_seance DESC, s.heure_seance DESC");
 $stmtReservations->execute([$coach_id]);
 $allReservations = $stmtReservations->fetchAll();
@@ -121,12 +122,11 @@ $recentReservations = array_slice($allReservations, 0, 5);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Coach - SportCoach</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../../issets/style.css">
+    <link rel="stylesheet" href="../../styles/style.css">
 </head>
 
 <body>
 
-<!-- NAVBAR -->
 <nav class="navbar" id="navbar">
     <div class="nav-container">
         <a href="#" class="logo" onclick="showSection('overview'); return false;">
@@ -152,7 +152,6 @@ $recentReservations = array_slice($allReservations, 0, 5);
 
 <div class="dashboard">
 
-    <!-- SIDEBAR -->
     <aside class="sidebar">
         <ul class="sidebar-menu">
             <li class="sidebar-item">
@@ -185,10 +184,8 @@ $recentReservations = array_slice($allReservations, 0, 5);
         </ul>
     </aside>
 
-    <!-- MAIN -->
     <main class="main-content">
 
-        <!-- OVERVIEW -->
         <div id="overviewSection" class="dashboard-section">
             <div class="dashboard-header">
                 <h1>Tableau de bord</h1>
@@ -259,7 +256,7 @@ $recentReservations = array_slice($allReservations, 0, 5);
                             <th>Date</th>
                             <th>Heure</th>
                             <th>Durée</th>
-                            <th>Statut séance</th>
+                            <th>Statut</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -277,10 +274,10 @@ $recentReservations = array_slice($allReservations, 0, 5);
                                     <td><?= substr($r['heure_seance'], 0, 5) ?></td>
                                     <td><?= $r['duree_senace'] ?> min</td>
                                     <td>
-                                        <?php if (($r['statut_seance']) === 'reservee'): ?>
-                                            <span class="status-badge pending">Réservée</span>
+                                        <?php if (($r['statut_reservation'] ?? '') === 'annulee'): ?>
+                                            <span class="status-badge cancelled">Annulée</span>
                                         <?php else: ?>
-                                            <span class="status-badge confirmed">Disponible</span>
+                                            <span class="status-badge confirmed">Active</span>
                                         <?php endif; ?>
                                     </td>
                                 </tr>
@@ -291,7 +288,6 @@ $recentReservations = array_slice($allReservations, 0, 5);
             </div>
         </div>
 
-        <!-- RESERVATIONS -->
         <div id="reservationsSection" class="dashboard-section" style="display:none;">
             <div class="dashboard-header">
                 <h1>Réservations</h1>
@@ -311,12 +307,13 @@ $recentReservations = array_slice($allReservations, 0, 5);
                             <th>Date</th>
                             <th>Heure</th>
                             <th>Durée</th>
+                            <th>Statut</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (count($allReservations) === 0): ?>
                             <tr>
-                                <td colspan="5" style="text-align:center; padding:40px; color: var(--text-gray);">
+                                <td colspan="6" style="text-align:center; padding:40px; color: var(--text-gray);">
                                     Aucune réservation
                                 </td>
                             </tr>
@@ -328,6 +325,7 @@ $recentReservations = array_slice($allReservations, 0, 5);
                                     <td><?= $r['date_seance'] ?></td>
                                     <td><?= substr($r['heure_seance'], 0, 5) ?></td>
                                     <td><?= $r['duree_senace'] ?> min</td>
+                                    <td><?= $r['statut_reservation'] ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>
@@ -336,7 +334,6 @@ $recentReservations = array_slice($allReservations, 0, 5);
             </div>
         </div>
 
-        <!-- SEANCES (DISPONIBILITES) -->
         <div id="seancesSection" class="dashboard-section" style="display:none;">
             <div class="dashboard-header">
                 <h1>Mes Séances</h1>
@@ -399,56 +396,67 @@ $recentReservations = array_slice($allReservations, 0, 5);
         <div id="profileSection" class="dashboard-section" style="display:none;">
             <div class="dashboard-header">
                 <h1>Mon Profil</h1>
-                <p style="color: var(--text-gray);">Informations coach</p>
+                <p style="color: var(--text-gray);">Mes informations personnelles</p>
             </div>
 
-            <div class="table-container">
-                <form action="../update_coach.php" method="POST" style="max-width:700px; margin:0 auto;">
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
-                        <div class="form-group">
-                            <label>Prénom</label>
-                            <input type="text" name="prenom" class="form-control" value="<?= $coach_prenom ?>" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Nom</label>
-                            <input type="text" name="nom" class="form-control" value="<?= $coach_nom ?>" required>
-                        </div>
+            <div class="table-container" style="max-width:700px; margin:0 auto;">
+                <div style="display:flex; gap:20px; align-items:center; margin-bottom:20px;">
+                    <i class="fas fa-user-tie" style="font-size:80px; color: var(--primary-gold);"></i>
+                    <div>
+                        <h2 style="margin:0; color: var(--primary-dark);">
+                            <?= $coach_nom . ' ' . $coach_prenom ?>
+                        </h2>
+                        <p style="margin:5px 0 0; color: var(--text-gray);">
+                            Compte Coach
+                        </p>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                    <div style="background: var(--primary-light); padding:15px; border-radius:10px;">
+                        <strong>Nom</strong>
+                        <p style="margin:8px 0 0; color: var(--text-gray);"><?= $coach_nom ?></p>
                     </div>
 
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" name="email" class="form-control" value="<?= $coach_email ?>" required>
+                    <div style="background: var(--primary-light); padding:15px; border-radius:10px;">
+                        <strong>Prénom</strong>
+                        <p style="margin:8px 0 0; color: var(--text-gray);"><?= $coach_prenom ?></p>
                     </div>
 
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
-                        <div class="form-group">
-                            <label>Discipline</label>
-                            <input type="text" name="discipline" class="form-control" value="<?= $coach_discipline ?>" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Expérience (années)</label>
-                            <input type="number" name="experience" class="form-control" value="<?= (int)$coach_experience ?>" min="0" required>
-                        </div>
+                    <div style="background: var(--primary-light); padding:15px; border-radius:10px;">
+                        <strong>Email</strong>
+                        <p style="margin:8px 0 0; color: var(--text-gray);"><?= $coach_email ?></p>
                     </div>
 
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea name="description" class="form-control" rows="4"
-                                  style="padding:12px; resize:vertical; border-radius:8px; border:2px solid #e5e5e5;"
-                                  required><?= $coach_desc ?></textarea>
+                    <div style="background: var(--primary-light); padding:15px; border-radius:10px;">
+                        <strong>Discipline</strong>
+                        <p style="margin:8px 0 0; color: var(--text-gray);"><?= $coach_discipline ?></p>
                     </div>
 
-                    <button type="submit" class="btn-submit">
-                        <i class="fas fa-save"></i> Enregistrer
+                    <div style="background: var(--primary-light); padding:15px; border-radius:10px;">
+                        <strong>Expérience</strong>
+                        <p style="margin:8px 0 0; color: var(--text-gray);"><?= $coach_experience ?> ans</p>
+                    </div>
+
+                    <div style="background: var(--primary-light); padding:15px; border-radius:10px; grid-column: 1 / -1;">
+                        <strong>Description</strong>
+                        <p style="margin:8px 0 0; color: var(--text-gray); line-height:1.7;">
+                            <?= $coach_desc ?>
+                        </p>
+                    </div>
+                </div>
+
+                <div style="margin-top:20px; text-align:center;">
+                    <button class="btn-primary" onclick="showSection('seances')">
+                        <i class="fas fa-clock"></i> Gérer mes disponibilités
                     </button>
-                </form>
+                </div>
             </div>
         </div>
 
     </main>
 </div>
 
-<!-- MODAL ADD SEANCE -->
 <div class="modal" id="addSeanceModal" style="display:none;">
     <div class="modal-content" style="max-width: 500px;">
         <div class="modal-header">

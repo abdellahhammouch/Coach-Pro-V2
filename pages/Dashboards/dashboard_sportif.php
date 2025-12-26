@@ -273,7 +273,7 @@ $mycoaches_list = $mycoaches->fetchAll();
                                 <td><span class="status-badge <?= $status_class ?>"><?= $status_label ?></span></td>
                                 <td class="action-buttons">
                                     <?php if ($r['statut_reservation'] === 'active'): ?>
-                                        <form method="POST" action="cancel_reservation.php" style="display:inline;">
+                                        <form method="POST" action="../cancel_reservation.php" style="display:inline;">
                                             <input type="hidden" name="reservation_id" value="<?= $r['id_reservation'] ?>">
                                             <button type="submit" class="btn-reject" onclick="return confirm('Annuler cette réservation ?')">Annuler</button>
                                         </form>
@@ -342,7 +342,7 @@ $mycoaches_list = $mycoaches->fetchAll();
                                 <td><span class="status-badge <?= $status_class ?>"><?= $status_label ?></span></td>
                                 <td class="action-buttons">
                                     <?php if ($r['statut_reservation'] === 'active'): ?>
-                                        <form method="POST" action="cancel_reservation.php" style="display:inline;">
+                                        <form method="POST" action="../cancel_reservation.php" style="display:inline;">
                                             <input type="hidden" name="reservation_id" value="<?= $r['id_reservation'] ?>">
                                             <button type="submit" class="btn-reject" onclick="return confirm('Annuler cette réservation ?')">Annuler</button>
                                         </form>
@@ -379,12 +379,10 @@ $mycoaches_list = $mycoaches->fetchAll();
             <div class="coaches-grid" id="coachesGrid">
                 <?php foreach ($coaches as $coach): ?>
                     <?php
-                        $totalSportifsStmt = $connect->prepare("
-                            SELECT COUNT(DISTINCT r.sportif_id) AS totalSportifs
-                            FROM reservations r
-                            INNER JOIN seances s ON s.id_seance = r.seance_id
-                            WHERE s.coach_id = ?
-                        ");
+                        $totalSportifsStmt = $connect->prepare("SELECT COUNT(DISTINCT r.sportif_id) AS totalSportifs
+                                                                FROM reservations r
+                                                                INNER JOIN seances s ON s.id_seance = r.seance_id
+                                                                WHERE s.coach_id = ?");
                         $totalSportifsStmt->execute([$coach['id_coach']]);
                         $totalSportifs = ($totalSportifsStmt->fetch()['totalSportifs'] ?? 0);
 
@@ -469,7 +467,7 @@ $mycoaches_list = $mycoaches->fetchAll();
                                                 <td><?= substr($s['heure_seance'], 0, 5) ?></td>
                                                 <td><?= $s['duree_senace'] ?> min</td>
                                                 <td>
-                                                    <form method="POST" action="reserve_seance.php">
+                                                    <form method="POST" action="../reserve_seance.php">
                                                         <input type="hidden" name="seance_id" value="<?= $s['id_seance'] ?>">
                                                         <button class="btn-book" type="submit">Réserver</button>
                                                     </form>
@@ -521,7 +519,7 @@ $mycoaches_list = $mycoaches->fetchAll();
 
                                 <div class="coach-actions">
                                     <button class="btn-view" onclick="viewCoachProfileModal(<?= $coach['id_coach'] ?>)">
-                                        <i class="fas fa-eye"></i> Voir profil
+                                        <i class="fas fa-eye"></i> Voir profil 
                                     </button>
                                 </div>
                             </div>
