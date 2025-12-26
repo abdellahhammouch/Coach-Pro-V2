@@ -27,6 +27,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $password = $_POST["password"];
     $confirmPassword = $_POST["confirmPassword"];
     $role     = trim($_POST["role"]);
+    $disciplines = trim($_POST["disciplines"] ?? "");
+    $experience  = $_POST["experience"] ?? null;
+    $bio         = trim($_POST["biographie"] ?? "");
 
     $old["nom"] = $nom;
     $old["prenom"] = $prenom;
@@ -49,6 +52,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if ($password !== $confirmPassword) {
         $errors[] = "Les mots de passe ne correspondent pas.";
     }
+    if ($role !== "coach") {
+        $disciplines = null;
+        $experience = null;
+        $bio = null;
+    }
 
     if (empty($errors)) {
         try {
@@ -57,7 +65,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             $user = new Utilisateur($pdo);
 
-            if ($user->register($nom, $prenom, $email, $password, $role)) {
+            if ($user->register($nom, $prenom, $email, $password, $role, $disciplines, $experience, $bio)) {
                 $_SESSION["success"] = "Inscription réussie. Connecte-toi maintenant.";
                 header("Location: login.php");
                 exit;

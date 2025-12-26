@@ -14,7 +14,6 @@ $old = [
     "role" => ""
 ];
 
-// Flash messages (from register redirect)
 $success = $_SESSION["success"] ?? null;
 unset($_SESSION["success"]);
 
@@ -27,7 +26,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $old["email"] = $email;
     $old["role"] = $role;
 
-    // Validations simples
     if ($email === "")    $errors[] = "Email obligatoire.";
     if ($password === "") $errors[] = "Mot de passe obligatoire.";
     if ($email !== "" && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -46,23 +44,20 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             if ($user->login($email, $password)) {
 
-                // Important: vérifier que l'utilisateur a choisi le bon rôle
                 if ($user->getRole() !== $role) {
                     $errors[] = "Type de compte incorrect (coach/sportif).";
                 } else {
-                    // Stocker infos utiles en session
                     $_SESSION["user_id"] = $user->getId();
                     $_SESSION["nom"] = $user->getNom();
                     $_SESSION["prenom"] = $user->getPrenom();
                     $_SESSION["email"] = $user->getEmail();
                     $_SESSION["role"] = $user->getRole();
 
-                    // Redirection vers le bon dashboard
                     if ($user->getRole() === "coach") {
-                        header("Location: dashboard/dashboard_coach.php");
+                        header("Location: Dashboards/dashboard_coach.php");
                         exit;
                     } else {
-                        header("Location: dashboard/dashboard_sportif.php");
+                        header("Location: Dashboards/dashboard_sportif.php");
                         exit;
                     }
                 }
@@ -97,7 +92,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             </a>
             <ul class="nav-menu" id="navMenu">
                 <li><a href="index.php" class="nav-link"><i class="fas fa-home"></i> Accueil</a></li>
-                <li><a href="coaches.php" class="nav-link"><i class="fas fa-users"></i> Nos Coachs</a></li>
+                <li><a href="login.php" class="nav-link"><i class="fas fa-users"></i> Nos Coachs</a></li>
                 <li><a href="login.php" class="btn-secondary"><i class="fas fa-sign-in-alt"></i> Connexion</a></li>
                 <li><a href="register.php" class="btn-primary"><i class="fas fa-user-plus"></i> Inscription</a></li>
             </ul>
@@ -133,7 +128,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             </div>
         <?php endif; ?>
 
-        <!-- IMPORTANT: action="" so it posts to the same file -->
         <form id="loginForm" action="" method="POST">
             <div class="form-group">
                 <label for="email">Email</label>
@@ -146,7 +140,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         class="form-control"
                         placeholder="votre@email.com"
                         required
-                        value="<?= htmlspecialchars($old['email']) ?>"
+                        value="<?= $old['email'] ?>"
                     >
                 </div>
                 <span class="error-message" id="emailError">Veuillez entrer un email valide</span>
@@ -165,10 +159,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <label for="userType">Type de compte</label>
                 <div class="input-group">
                     <i class="fas fa-user-tag"></i>
-                    <select name="userType" id="userType" class="form-control" required>
+                    <select name="role" id="userType" class="form-control" required>
                         <option value="">Sélectionnez votre rôle</option>
-                        <option value="sportif" <?= ($old["userType"] === "sportif") ? "selected" : "" ?>>Sportif</option>
-                        <option value="coach" <?= ($old["userType"] === "coach") ? "selected" : "" ?>>Coach</option>
+                        <option value="sportif" <?= ($old["role"] === "sportif") ? "selected" : "" ?>>Sportif</option>
+                        <option value="coach" <?= ($old["role"] === "coach") ? "selected" : "" ?>>Coach</option>
                     </select>
                 </div>
                 <span class="error-message" id="userTypeError">Veuillez sélectionner un type de compte</span>

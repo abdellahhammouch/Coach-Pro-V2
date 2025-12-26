@@ -1,10 +1,8 @@
 <?php
-require_once "/../config/database.php";
-require_once "Utilisateur.php";
 
-$db = new Database();
-$pdo = $db->connect();
+require_once __DIR__ . "/Utilisateur.php";
 
-$user = new Utilisateur($pdo);
+class Sportif extends Utilisateur
+{
 
-?>
+}
