@@ -30,6 +30,7 @@ COACH-PRO-V2/
 │ ├─ Coach.php
 │ └─ Reservation.php
 ├─ pages/
+│ ├─ 404.php
 │ ├─ login.php
 │ ├─ register.php
 │ ├─ logout.php
