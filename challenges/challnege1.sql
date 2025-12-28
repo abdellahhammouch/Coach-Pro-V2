@@ -1,13 +1,29 @@
+------ Challenge 1:
 
 
-select  coach_id, count(coach_id) from seances
-group by coach_id;
+------ 1:
+SELECT  coach_id, COUNT(coach_id) FROM seances
+GROUP BY coach_id;
 
 
-select  coach_id, count(coach_id) from seances
-where statut = "reservee"
-group by coach_id;
 
+------ 2:
+SELECT  coach_id, COUNT(coach_id) FROM seances
+WHERE statut = "reservee"
+GROUP BY coach_id;
+
+
+------ 3:
+SELECT  coach_id,
+        100 * SUM(statut = 'reservee') / (SELECT COUNT(*) FROM seances) AS taux_reservation_global
+FROM seances
+GROUP BY coach_id;
+
+
+------ 4:
+SELECT coach_id,count(id)  FROM seances
+GROUP BY coach_id
+having count(id) >=3;
 
 
 
